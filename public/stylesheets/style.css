@@ -1,0 +1,18 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+img.thumbnail {
+  max-height: 40vh;
+  object-fit: cover;
+}
+.material{
+  padding-top: 45px;
+}
+img.banner{
+  padding: 35px;
+}
