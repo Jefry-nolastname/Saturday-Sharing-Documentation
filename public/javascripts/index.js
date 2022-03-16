@@ -13,6 +13,12 @@ exampleModal.addEventListener('show.bs.modal', function (event) {
     Files = [];
     $("input").val("");
     $("#uploadedFile").empty();
+
+    $("#formCreate").submit((event)=>{
+        event.preventDefault();
+        console.log($(event.target).serializeArray());
+    });
+
     $("#formFile").change( (event) => {
         if(event.target.files.length>0){
             for(var i=0;i<event.target.files.length;i++){
@@ -26,6 +32,7 @@ exampleModal.addEventListener('show.bs.modal', function (event) {
             $(event.target).val("");
         }
     });
+
     $("#join-form").change(async (event)=>{
         const file = event.target.files[0];
         const data = await file.arrayBuffer();

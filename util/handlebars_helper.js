@@ -8,10 +8,8 @@ hbs.registerHelper("check_selected", function (value, options) {
 
 hbs.registerHelper("selected", function (option, value) {
 	if (option === value) {
-		console.log(true);
 		return " selected";
 	} else {
-		console.log(false);
 		return "";
 	}
 });
