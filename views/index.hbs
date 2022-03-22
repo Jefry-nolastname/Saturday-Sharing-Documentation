@@ -6,9 +6,17 @@
   <button class="btn btn-primary me-md-2" type="button" data-bs-toggle="modal" data-bs-target="#CreateTopicModal">Add New Topic</button>
 </div>
 <form action="/" method="post">
+<select name="company" id="companySelect" class="mb-3 form-select" aria-label="Default select example">
+  <option value="">Pilih company</option>
+  {{#each companies}}
+    <option {{selected id ../company}} value={{id}}>{{attributes.Name}}</option>
+  {{/each}}
+</select>
 <select name="division" id="divisionSelect" class="form-select" aria-label="Default select example">
-  <option {{selected "" division}} value="">Open this select menu</option>
-  <option value="ict" {{selected "ict" division}}>ICT</option>
+  <option value="">Pilih divisi</option>
+  {{#each divisions}}
+    <option {{selected id ../division}} value={{id}}>{{attributes.Name}}</option>
+  {{/each}}
 </select>
 </form>
 <div class="container">
@@ -18,23 +26,23 @@
     {{#each material}}
          <div class="col material">
             <div class="card" style="width: 18rem;">
-                <img class="thumbnail" src="/images/sample-thumnail.jpg" class="card-img">
+                <img class="thumbnail" src="{{../hostAddress}}{{attributes.Images.data.[0].attributes.url}}" class="card-img">
                 <div class="card-body">
                     <div class="row">
                         <div class="col-6">
-                            <h5 class="card-title">Card title</h5>
+                            <h5 class="card-title">{{attributes.Title}}</h5>
                         </div>
                         <div class="col-6 justify-content-md-end" style="text-align: end;">
-                            <small class="card-subtitle mb-2">25 Dec 2021</small>
+                            <small class="card-subtitle mb-2">{{attributes.Presented}}</small>
                         </div>
                     </div>
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#ParticipantModal">
-                        <div class="card-subtitle mb-2"> <span class="badge bg-success">4 Participant(s)</span></span></div>
+                    <a href="#" id="showParticipants">
+                        <div class="card-subtitle mb-2"> <span material="{{id}}" class="badge bg-success">{{attributes.participants.data.length}} Participant(s)</span></span></div>
                     </a>
-                    <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                    <a href="/details" class="btn btn-primary">See details</a>
+                    <p class="card-text">{{attributes.Description}}</p>
+                    <a href="/details?s={{id}}" class="btn btn-primary">See details</a>
                     <div class="col-12 justify-content-md-end" style="text-align: end;">
-                        <small class="card-subtitle mb-2">by Cecili (ICT)</small>
+                        <small class="card-subtitle mb-2">by {{attributes.Name}} ({{attributes.division.data.attributes.Name}})</small>
                     </div>
                 </div>
             </div>
@@ -47,11 +55,13 @@
     </center>
   {{/if}}
 </div>
+<input type="hidden" id="selMaterial">
 
 
 
 {{!--This is Modal--}}
 <div class="modal fade" id="CreateTopicModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <input id="host" type="hidden" value="{{hostAddress}}">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -62,44 +72,66 @@
       <div class="modal-body">
           <div class="col-auto">
             <label for="contributor" class="col-form-label">Name :</label>
-            <input name="Name" type="text" class="form-control" id="contributor"> 
+            <input name="Name" type="text" class="form-control" id="contributor" value=""> 
+          </div> 
+           <div class="col-auto">
+            <label for="contributor" class="col-form-label">Company :</label>
+            <select id="modalCompanySelect" name="company" class="form-select" aria-label="Default select example">
+                <option  value="">Please select your division</option>
+                {{#each companies}}
+                  <option value={{id}}>{{attributes.Name}}</option>
+                {{/each}}
+            </select>
           </div> 
           <div class="col-auto">
             <label for="division" class="col-form-label">Division :</label>
-            <select name="division" class="form-select" aria-label="Default select example">
+            <select id="modalDivisionSelect" name="division" class="form-select" aria-label="Default select example">
                 <option  value="">Please select your division</option>
-                <option value="ict">ICT</option>
             </select>
           </div> 
           <div class="mb-1">
             <label for="recipient-name" class="col-form-label">Title :</label>
-            <input name="Title" type="text" class="form-control" id="recipient-name">
+            <input name="Title" type="text" class="form-control" id="recipient-name" value="">
           </div>
           <div class="mb-1">
             <label for="message-text" class="col-form-label">Description :</label>
-            <textarea name="Description" class="form-control" id="message-text"></textarea>
+            <textarea name="Description" class="form-control" id="message-text" value=""></textarea>
+          </div>
+          <div class="mb-1">
+            <label for="join-form" class="col-form-label">Presented date:</label>
+            <input name="Presented" placeholder="masukkan tanggal" type="text" class="form-control datepicker" name="tgl_awal"> 
           </div>
           <div class="mb-1">
             <label for="join-form" class="col-form-label">Join Form Excel File:</label>
-            <input class="form-control" type="file" id="join-form" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
+            <input class="form-control" value="" type="file" id="join-form" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
             <small id="participantCounter"></small>
-            <input type="hidden" name="Participant"/>
+            <input type="hidden" name="ParticipantList"/>
           </div>
           <div class="mb-1">
-            <label for="video-link" class="col-form-label">Youtube Link :</label>
-            <input name="Video" class="form-control" type="file" id="formFile" multiple="multiple" accept="video/*">
+            <label class="col-form-label">Video File :</label>
+            <input value="" id="videoFile" class="form-control" type="file" multiple="multiple" accept="video/*">
           </div>
           <div class="mb-1">
-            <label for="formFile" class="form-label">Upload Thumbnails</label>
-            <input name="Images" class="form-control" type="file" id="formFile" multiple="multiple" accept="image/*">
-            <ul id="uploadedFile">
-            </ul>
-        </div>
+            <label class="form-label">Upload Thumbnails</label>
+            <input value="" class="form-control" type="file" id="formFile" multiple="multiple" accept="image/*">
+            <ul id="uploadedFile"></ul>
+          </div>
+          <div class="mb-1">
+            <label class="form-label">Upload Materials File</label>
+            <input value="" class="form-control" type="file" id="formAttachment" multiple="multiple">
+            <ul id="uploadedAttachment"></ul>
+          </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         <button type="submit" class="btn btn-primary">Save</button>
       </div>
+      </form>
+      <form id="uploadMediaForm" style="display:none;">
+        <input type="text" name="ref"/>
+        <input type="text" name="refId"/>
+        <input type="text" name="field"/>
+        <input type="file" name="files">
       </form>
     </div>
   </div>
@@ -107,40 +139,24 @@
 
 
 <div class="modal fade" id="ParticipantModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="exampleModalLabel">Participants</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <table class="table">
+        <table class="table" id="participantsTable">
             <thead>
                 <tr>
-                <th scope="col">#</th>
-                <th scope="col">First</th>
-                <th scope="col">Last</th>
-                <th scope="col">Handle</th>
+                <th scope="col">No</th>
+                <th scope="col">Name</th>
+                <th scope="col">Company</th>
+                <th scope="col">Division</th>
+                <th scope="col">Email</th>
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                <th scope="row">1</th>
-                <td>Mark</td>
-                <td>Otto</td>
-                <td>@mdo</td>
-                </tr>
-                <tr>
-                <th scope="row">2</th>
-                <td>Jacob</td>
-                <td>Thornton</td>
-                <td>@fat</td>
-                </tr>
-                <tr>
-                <th scope="row">3</th>
-                <td colspan="2">Larry the Bird</td>
-                <td>@twitter</td>
-                </tr>
             </tbody>
         </table>
       </div>
@@ -152,3 +168,12 @@
     <script src='/javascripts/index.js'></script>
     <script src="/javascripts/xlsx/xlsx.full.min.js"></script>
     <script src="/javascripts/xlsx/cpexcel.js"></script>
+    <script type="text/javascript">
+    $(function(){
+      $(".datepicker").datepicker({
+          format: 'dd M yyyy',
+          autoclose: true,
+          todayHighlight: true,
+      });
+    });
+    </script>

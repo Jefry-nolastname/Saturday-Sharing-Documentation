@@ -1,5 +1,6 @@
 var createError = require('http-errors');
 var express = require('express');
+require('dotenv').config();
 require("./util/handlebars_helper");
 var path = require('path');
 var cookieParser = require('cookie-parser');
