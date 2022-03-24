@@ -1,9 +1,19 @@
 
+$(".editMaterial").click(async(e)=>{
+    console.log($(e.target));
+    var el = $(e.target).find('[material]').length == 0?$(e.target).closest('[material]'):$(e.target).find('[material]');
+    $("#selMaterial").val(el.attr('material'));
+    var myModal = new bootstrap.Modal(document.getElementById('CreateTopicModal'), {});
+    $("#CreateTopicModal").attr('operation','edit');
+    myModal.show();
+});
+
 $(".showParticipants").click(async(e)=>{
-    $("#selMaterial").val($(e.target).attr('material'));
+    $("#selMaterial").val($(e.target).closest('[material]').attr('material'));
     var myModal = new bootstrap.Modal(document.getElementById('ParticipantModal'), {});
     myModal.show();
 });
+
 $("#divisionSelect").change(async (e)=>{
     $(e.target).parent().submit();
 });
@@ -13,14 +23,18 @@ $("#companySelect").change(async(e)=>{
 });
 var list;
 var attachment;
+var removeMedia = [];
 function removeUpload(e,listFile){
     var li = $(e.target).parent();
-    li.remove();
-    for(var i=0;i<listFile.items.length;i++){
-        if(listFile.files[i].name ==li.attr("name")){
-            listFile.items.remove(listFile.files[i]);
+    if(li.attr('status')=='uploaded') removeMedia.push(li.val());
+    else{
+        for(var i=0;i<listFile.items.length;i++){
+            if(listFile.files[i].name ==li.attr("name")){
+                listFile.items.remove(listFile.files[i]);
+            }
         }
     }
+    li.remove();
 }
 var participantsModal = document.getElementById('ParticipantModal');
 participantsModal.addEventListener('show.bs.modal', async function (event) {
@@ -49,31 +63,132 @@ participantsModal.addEventListener('show.bs.modal', async function (event) {
     }
 });
 
-var createModal = document.getElementById('CreateTopicModal')
-createModal.addEventListener('show.bs.modal', function (event) {
+var createModal = document.getElementById('CreateTopicModal');
+
+createModal.addEventListener('hidden.bs.modal', function (event){
+    $("#CreateTopicModal").attr('operation','');
+    $("#uploadedAttachment").empty();
+    $("#uploadedFile").empty();
+    $("#videoSelected").remove();
+});
+createModal.addEventListener('show.bs.modal', async function (event) {
+    removeMedia = [];
+    $("input[type!='hidden']").val("");
+    $("select").val("");
+    $("textarea").html('');
+    var container = document.getElementById('participantCounter');
+    container.innerHTML = '';     
+    $("input[name='ParticipantList']").val("");   
     list = new DataTransfer();
     attachment = new DataTransfer();
-    $("input[type!='hidden']").val("");
+    
     $("#uploadedFile").empty();
     $('[data-toggle="datepicker"]').datepicker({
         });
-        
-
-    $("#modalCompanySelect").change(async(e)=>{
-        var res = await fetch("/divisions",{
+    if($("#CreateTopicModal").attr('operation')=='edit'){
+        $('#loading').show();
+        var res = await fetch("/material",{
             headers: {
                 'Content-Type': 'application/json'
             },
             method:"POST",
-            body:JSON.stringify({company:e.target.value})
+            body:JSON.stringify({material:$("#selMaterial").val()})
         });
         if(res.ok){
-            var obj = await res.json();
-            $("#modalDivisionSelect").empty();
-            $("#modalDivisionSelect").append('<option  value="">Please select your division</option>');
-            obj['divisions'].forEach((i)=>{
-                $("#modalDivisionSelect").append(`<option  value="${i.id}">${i.attributes.Name}</option>`);
+            try{
+                var obj = await res.json();
+                Object.keys(obj).forEach(async (i)=>{
+                    if(typeof obj[i] === 'object'&& !(obj[i].data instanceof Array)){
+                        if(!obj[i].data.attributes.mime){
+                            $(`[name='${i}']`).val(obj[i].data.id);
+                            if(i=='company'){
+                                var res = await fetch("/divisions",{
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    method:"POST",
+                                    body:JSON.stringify({company:obj[i].data.id})
+                                });
+                                if(res.ok){
+                                    var resp = await res.json();
+                                    $("#modalDivisionSelect").empty();
+                                    $("#modalDivisionSelect").append('<option value="">Please select your division</option>');
+                                    resp['divisions'].forEach((item)=>{
+                                        $("#modalDivisionSelect").append(`<option ${(item.id==obj['division'].data.id)?'selected':''} value="${item.id}">${item.attributes.Name}</option>`);
+                                    });
+                                    $("#modalDivisionSelect").removeAttr('disabled');
+                                }
+                            }
+                        }
+                        else{
+                            $( "input#videoFile" ).after( `<small id="videoSelected">current video : ${obj[i].data.attributes.name}</small>` );
+                        }
+                    }
+                    else {
+                        if(obj[i].data instanceof Array){
+                            if(i=='participants'){
+                                var aoa = obj[i].data.map((o)=>o.attributes);
+                                var container = document.getElementById('participantCounter');
+                                container.innerHTML = `${aoa.length} Participant(s)`;     
+                                $("input[name='ParticipantList']").val(JSON.stringify(aoa));   
+                            }
+                            else if(i=='Images'){
+                                obj[i].data.forEach(async(thumbnails)=>{
+                                    $("#uploadedFile").append(
+                                        `<li status='uploaded' value='${thumbnails.id}' name='${thumbnails.attributes.name}'>${thumbnails.attributes.name}
+                                            <button type="button" class="btn-close removeUpload" onclick="removeUpload(event,list)" aria-label="Close"></button>
+                                        </li>`
+                                    );
+                                });
+                            }
+                            else if(i=='Attachments'){
+                                obj[i].data.forEach(async(attachments)=>{
+                                    $("#uploadedAttachment").append(
+                                        `<li status='uploaded' value='${attachments.id}' name='${attachments.attributes.name}'>${attachments.attributes.name}
+                                            <button type="button" class="btn-close removeUpload" onclick="removeUpload(event,attachment)" aria-label="Close"></button>
+                                        </li>`
+                                    );
+                                });
+                            }
+                        } 
+                        else $(`[name='${i}']`).val(obj[i]);
+                    }
+                });
+            }
+            catch(e){
+                $('#loading').hide();
+                console.log(e);
+            }
+        }
+        else{
+            alert("Something wrong when loading data!");
+        }
+        $('#loading').hide();
+    }
+    
+    $("#modalCompanySelect").change(async(e)=>{
+        console.log('asdasd',e.target.value);
+        if(e.target.value&&e.target.value!=''){
+            console.log("show");
+            $("#modalDivisionSelect").removeAttr('disabled');
+            var res = await fetch("/divisions",{
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                method:"POST",
+                body:JSON.stringify({company:e.target.value})
             });
+            if(res.ok){
+                var obj = await res.json();
+                $("#modalDivisionSelect").empty();
+                $("#modalDivisionSelect").append('<option  value="">Please select your division</option>');
+                obj['divisions'].forEach((i)=>{
+                    $("#modalDivisionSelect").append(`<option  value="${i.id}">${i.attributes.Name}</option>`);
+                });
+            }
+        }
+        else {
+            $("#modalDivisionSelect").attr('disabled','disabled');
         }
     });
     $("#formCreate").submit(async (event)=>{
@@ -120,63 +235,6 @@ createModal.addEventListener('show.bs.modal', function (event) {
             }
             request.open('POST', $('#host').val()+"/api/materials");
             request.send(formData);
-
-            // const response = await fetch($('#host').val()+"/api/saveMaterial", {
-            //     method: 'POST', 
-            //     headers: {
-            //     'Content-Type': 'multipart/form-data'
-            //     },
-            //     body: formData // body data type must match "Content-Type" header
-            // });
-            // console.log(await response.json());
-            // if(response.ok){
-            //     var json = await response.json();
-            //     $("#uploadMediaForm input[name='ref']").val('api::material.material');
-            //     $("#uploadMediaForm input[name='refId']").val(json.id);
-            //     $("#uploadMediaForm input[name='field']").val('Images');
-            //     $("#uploadMediaForm input[name='files']").prop('files',list.files);
-            //     var data = new FormData(document.getElementById('uploadMediaForm'));
-            //     var upload = await fetch($('#host').val()+"/api/upload",{
-            //         method: 'POST', 
-            //         body:data
-            //     });
-            //     if(upload.ok){
-            //         $("#uploadMediaForm input[name='field']").val('Attachments');
-            //         $("#uploadMediaForm input[name='files']").prop('files',attachment.files);
-            //         data = new FormData(document.getElementById('uploadMediaForm'));
-            //         upload = await fetch($('#host').val()+"/api/upload",{
-            //             method: 'POST', 
-            //             body:data
-            //         });
-            //         if(upload.ok){
-            //             $("#uploadMediaForm input[name='field']").val('Video');
-            //             $("#uploadMediaForm input[name='files']").prop('files',$("#videoFile").prop('files'));
-            //             data = new FormData(document.getElementById('uploadMediaForm'));
-            //             upload = await fetch($('#host').val()+"/api/upload",{
-            //                 method: 'POST', 
-            //                 body:data
-            //             });
-            //             if(upload.ok){
-            //                 location.reload(); 
-            //             }
-            //             else{
-            //                 alert("Gagal mengupload video dokumentasi!");
-            //             }
-            //         }
-            //         else{
-            //             alert("Gagal mengupload materi dokumentasi!");
-            //         }
-            //     }
-            //     else
-            //     {
-            //         alert("Gagal mengupload gambar thumbnail!");
-            //         // console.log(await upload.json());
-            //     }
-            // }
-            // else{
-            //     // var res =await response.json();
-            //     alert('Gagal membuat data dokumentasi material!');
-            // }
         }
     });
 

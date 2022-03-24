@@ -9,6 +9,7 @@ var materialApi = require("../api/material");
 router.get('/', async function(req, res, next) {
   var companaies = await companyApi.companyList();
   res.render('index',{
+    hostAddress:process.env.backend_url,
     companies:companaies,
   });
 });

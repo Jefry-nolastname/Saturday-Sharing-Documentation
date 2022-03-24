@@ -26,7 +26,12 @@
     {{#each material}}
          <div class="col material">
             <div class="card" style="width: 18rem;">
-                <img class="thumbnail" src="{{../hostAddress}}{{attributes.Images.data.[0].attributes.url}}" class="card-img">
+                <figure class="hover-menu">
+                  <img class="thumbnail" src="{{../hostAddress}}{{attributes.Images.data.[0].attributes.url}}" class="card-img">
+                  <div>
+                    <a href="#" class="editMaterial"><i material="{{id}}" class="fa-solid fa-pen-to-square"></i></a>
+                  </div>
+                </figure>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-6">
@@ -85,7 +90,7 @@
           </div> 
           <div class="col-auto">
             <label for="division" class="col-form-label">Division :</label>
-            <select id="modalDivisionSelect" name="division" class="form-select" aria-label="Default select example">
+            <select id="modalDivisionSelect" disabled name="division" class="form-select" aria-label="Default select example">
                 <option  value="">Please select your division</option>
             </select>
           </div> 
