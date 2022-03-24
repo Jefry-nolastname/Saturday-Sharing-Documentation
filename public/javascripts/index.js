@@ -1,5 +1,5 @@
 
-$("#showParticipants").click(async(e)=>{
+$(".showParticipants").click(async(e)=>{
     $("#selMaterial").val($(e.target).attr('material'));
     var myModal = new bootstrap.Modal(document.getElementById('ParticipantModal'), {});
     myModal.show();
@@ -39,7 +39,7 @@ participantsModal.addEventListener('show.bs.modal', async function (event) {
             $("#participantsTable tbody").append(`
             <tr>
             <th scope="row">${indx+1}</th>
-            <td>${i.attributes.Name}}</td>
+            <td>${i.attributes.Name}</td>
             <td>${i.attributes.Company}</td>
             <td>${i.attributes.Division}</td>
             <td>${i.attributes.Email}</td>

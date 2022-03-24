@@ -20,6 +20,14 @@
                         </center></figure> 
                         <!-- Post content-->
                         <section class="mb-5">
+                            <h2 class="fw-bolder mb-4 mt-5">Attachment(s) :</h2>
+                            <ul>
+                            {{#each Attachments.data}}
+                                <li><a target="_blank" href="{{../hostAddress}}{{attributes.url}}" download>{{attributes.name}}</a></li>
+                            {{/each}}
+                            </ul>
+                        </section>
+                        <section class="mb-5">
                             <h2 class="fw-bolder mb-4 mt-5">Participant(s) :</h2>
                             <table class="table">
                                 <thead>
