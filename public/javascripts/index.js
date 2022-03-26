@@ -73,12 +73,14 @@ createModal.addEventListener('hidden.bs.modal', function (event){
 });
 createModal.addEventListener('show.bs.modal', async function (event) {
     removeMedia = [];
-    $("input[type!='hidden']").val("");
-    $("select").val("");
-    $("textarea").html('');
+    var materialData;
+    
+    $("#CreateTopicModal input[type!='hidden']").val("");
+    $("#CreateTopicModal select").val("");
+    $("#CreateTopicModal textarea").html('');
     var container = document.getElementById('participantCounter');
     container.innerHTML = '';     
-    $("input[name='ParticipantList']").val("");   
+    $("#CreateTopicModal input[name='ParticipantList']").val("");   
     list = new DataTransfer();
     attachment = new DataTransfer();
     
@@ -97,6 +99,7 @@ createModal.addEventListener('show.bs.modal', async function (event) {
         if(res.ok){
             try{
                 var obj = await res.json();
+                materialData = obj;
                 Object.keys(obj).forEach(async (i)=>{
                     if(typeof obj[i] === 'object'&& !(obj[i].data instanceof Array)){
                         if(!obj[i].data.attributes.mime){
@@ -194,48 +197,108 @@ createModal.addEventListener('show.bs.modal', async function (event) {
     $("#formCreate").submit(async (event)=>{
         event.preventDefault();
         $('#loading').show();
-        if($(event.target).serializeArray().filter((item)=>item.value=='').length>0){
-            alert("Cek kembali data yang belum diisi!");
-        }
-        else if($('input#videoFile').prop('files').length<=0 || list.files.length<=0){
-            alert("File yang dibutuhkan tidak lengkap!");
+        if($("#CreateTopicModal").attr('operation')=='edit'){
+            if($(event.target).serializeArray().filter((item)=>item.value=='').length>0){
+                alert("Cek kembali data yang belum diisi!");
+            }
+            // ini harus jingok empty dak li nyo
+            else if( list.files.length<=0 || attachment.files.length<=0){
+                alert("File yang dibutuhkan tidak lengkap!");
+            }
+            else {
+                const formData = new FormData();
+                var obj = {};
+                $(event.target).serializeArray().forEach(element => {
+                    try{
+                        obj[element.name] = JSON.parse(element.value);
+                    }
+                    catch(e){
+                        obj[element.name] = element.value;
+                    }
+                });
+                var Images = materialData["Images"].data.map((item)=>item.id);
+                obj["Images"] = Images.filter((item)=>!removeMedia.includes(item));
+                
+                for (let i = 0; i < list.files.length; i++) {
+                    const file = list.files[i];
+                    formData.append(`files.Images`, file, file.name);
+                }
+
+                var Attachments = materialData["Attachments"].data.map((item)=>item.id);
+                obj["Attachments"] = Attachments.filter((item)=>!removeMedia.includes(item));
+
+                for (let i = 0; i < attachment.files.length; i++) {
+                    const file = attachment.files[i];
+                    formData.append(`files.Attachments`, file, file.name);
+                }
+
+                if($("#videoFile").prop('files').length>0){
+                    obj["Video"]=[];
+                    formData.append(`files.Video`, $("#videoFile").prop('files')[0], $("#videoFile").prop('files')[0].name);
+                }
+
+                const request = new XMLHttpRequest();
+                request.onreadystatechange=function()
+                {       
+                    if(request.readyState==4){
+                        $('#loading').hide();
+                    }
+                    if(request.readyState==4 && request.status==200)
+                    {
+                        location.reload();
+                    }
+                }
+
+                formData.append('data', JSON.stringify(obj));
+                request.open('PUT', $('#host').val()+"/api/materials/"+$("#selMaterial").val());
+                request.send(formData);
+            }
         }
         else{
-            var obj = {};
-            $(event.target).serializeArray().forEach(element => {
-                try{
-                    obj[element.name] = JSON.parse(element.value);
-                }
-                catch(e){
-                    obj[element.name] = element.value;
-                }
-            });
-            const formData = new FormData();
-            formData.append('data', JSON.stringify(obj));
-            for (let i = 0; i < list.files.length; i++) {
-                const file = list.files[i];
-                formData.append(`files.Images`, file, file.name);
+            if($(event.target).serializeArray().filter((item)=>item.value=='').length>0){
+                alert("Cek kembali data yang belum diisi!");
             }
-            for (let i = 0; i < attachment.files.length; i++) {
-                const file = attachment.files[i];
-                formData.append(`files.Attachments`, file, file.name);
+            else if($('input#videoFile').prop('files').length<=0 || list.files.length<=0 || attachment.files.length<=0){
+                alert("File yang dibutuhkan tidak lengkap!");
             }
-            formData.append(`files.Video`, $("#videoFile").prop('files')[0], $("#videoFile").prop('files')[0].name);
-
-            const request = new XMLHttpRequest();
-            request.onreadystatechange=function()
-            {       
-                if(request.readyState==4){
-                    $('#loading').hide();
+            else{
+                var obj = {};
+                $(event.target).serializeArray().forEach(element => {
+                    try{
+                        obj[element.name] = JSON.parse(element.value);
+                    }
+                    catch(e){
+                        obj[element.name] = element.value;
+                    }
+                });
+                const formData = new FormData();
+                formData.append('data', JSON.stringify(obj));
+                for (let i = 0; i < list.files.length; i++) {
+                    const file = list.files[i];
+                    formData.append(`files.Images`, file, file.name);
                 }
-                if(request.readyState==4 && request.status==200)
-                {
-                    location.reload();
+                for (let i = 0; i < attachment.files.length; i++) {
+                    const file = attachment.files[i];
+                    formData.append(`files.Attachments`, file, file.name);
                 }
+                formData.append(`files.Video`, $("#videoFile").prop('files')[0], $("#videoFile").prop('files')[0].name);
+    
+                const request = new XMLHttpRequest();
+                request.onreadystatechange=function()
+                {       
+                    if(request.readyState==4){
+                        $('#loading').hide();
+                    }
+                    if(request.readyState==4 && request.status==200)
+                    {
+                        location.reload();
+                    }
+                }
+                request.open('POST', $('#host').val()+"/api/materials");
+                request.send(formData);
             }
-            request.open('POST', $('#host').val()+"/api/materials");
-            request.send(formData);
         }
+        
     });
 
     $("#formFile").change( (event) => {

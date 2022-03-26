@@ -8,6 +8,7 @@ a {
 }
 img.thumbnail {
   max-height: 40vh;
+  min-height: 30vh;
   object-fit: cover;
 }
 .material{
