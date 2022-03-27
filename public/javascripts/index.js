@@ -1,6 +1,21 @@
+$(".removeMaterial").click(async(e)=>{
+    var el = $(e.target).find('[material]').length == 0?$(e.target).closest('[material]'):$(e.target).find('[material]');
+    if(confirm("delete this material?")){
+        $("#loading").show();
+        var res = await fetch($('#host').val()+"/api/materials/"+el.attr('material'),{
+            method:"DELETE",
+        });
+        if(res.ok){
+            location.reload();
+        }
+        else{
+            $("#loading").hide();
+            alert("Tidak dapat menghapus materi. Terjadi kesalahan!");
+        }
+    }
+});
 
 $(".editMaterial").click(async(e)=>{
-    console.log($(e.target));
     var el = $(e.target).find('[material]').length == 0?$(e.target).closest('[material]'):$(e.target).find('[material]');
     $("#selMaterial").val(el.attr('material'));
     var myModal = new bootstrap.Modal(document.getElementById('CreateTopicModal'), {});
@@ -29,11 +44,14 @@ function removeUpload(e,listFile){
     if(li.attr('status')=='uploaded') removeMedia.push(li.val());
     else{
         for(var i=0;i<listFile.items.length;i++){
-            if(listFile.files[i].name ==li.attr("name")){
-                listFile.items.remove(listFile.files[i]);
+            // console.log(listFile.files[i].name.replace(/["']/g, ""),li.attr("name"),listFile.files[i].name.replace(/["']/g, "") ==li.attr("name"));
+            if(listFile.files[i].name.replace(/["']/g, "") ==li.attr("name")){
+                // console.log("deleting ",listFile.files[i]);
+                listFile.items.remove(i);
             }
         }
     }
+    // console.log(listFile.files,attachment.files);
     li.remove();
 }
 var participantsModal = document.getElementById('ParticipantModal');
@@ -78,6 +96,7 @@ createModal.addEventListener('show.bs.modal', async function (event) {
     $("#CreateTopicModal input[type!='hidden']").val("");
     $("#CreateTopicModal select").val("");
     $("#CreateTopicModal textarea").html('');
+    $("#CreateTopicModal textarea").val('');
     var container = document.getElementById('participantCounter');
     container.innerHTML = '';     
     $("#CreateTopicModal input[name='ParticipantList']").val("");   
@@ -138,7 +157,7 @@ createModal.addEventListener('show.bs.modal', async function (event) {
                             else if(i=='Images'){
                                 obj[i].data.forEach(async(thumbnails)=>{
                                     $("#uploadedFile").append(
-                                        `<li status='uploaded' value='${thumbnails.id}' name='${thumbnails.attributes.name}'>${thumbnails.attributes.name}
+                                        `<li status='uploaded' value='${thumbnails.id}' name='${thumbnails.attributes.name.replace(/["']/g, "")}'>${thumbnails.attributes.name}
                                             <button type="button" class="btn-close removeUpload" onclick="removeUpload(event,list)" aria-label="Close"></button>
                                         </li>`
                                     );
@@ -147,7 +166,7 @@ createModal.addEventListener('show.bs.modal', async function (event) {
                             else if(i=='Attachments'){
                                 obj[i].data.forEach(async(attachments)=>{
                                     $("#uploadedAttachment").append(
-                                        `<li status='uploaded' value='${attachments.id}' name='${attachments.attributes.name}'>${attachments.attributes.name}
+                                        `<li status='uploaded' value='${attachments.id}' name="${attachments.attributes.name.replace(/["']/g, "")}">${attachments.attributes.name}
                                             <button type="button" class="btn-close removeUpload" onclick="removeUpload(event,attachment)" aria-label="Close"></button>
                                         </li>`
                                     );
@@ -170,9 +189,7 @@ createModal.addEventListener('show.bs.modal', async function (event) {
     }
     
     $("#modalCompanySelect").change(async(e)=>{
-        console.log('asdasd',e.target.value);
         if(e.target.value&&e.target.value!=''){
-            console.log("show");
             $("#modalDivisionSelect").removeAttr('disabled');
             var res = await fetch("/divisions",{
                 headers: {
@@ -196,16 +213,16 @@ createModal.addEventListener('show.bs.modal', async function (event) {
     });
     $("#formCreate").submit(async (event)=>{
         event.preventDefault();
-        $('#loading').show();
         if($("#CreateTopicModal").attr('operation')=='edit'){
             if($(event.target).serializeArray().filter((item)=>item.value=='').length>0){
                 alert("Cek kembali data yang belum diisi!");
             }
             // ini harus jingok empty dak li nyo
-            else if( list.files.length<=0 || attachment.files.length<=0){
+            else if( $("ul#uploadedFile li").length<=0 || $("ul#uploadedAttachment li").length<=0){
                 alert("File yang dibutuhkan tidak lengkap!");
             }
             else {
+                $('#loading').show();
                 const formData = new FormData();
                 var obj = {};
                 $(event.target).serializeArray().forEach(element => {
@@ -262,6 +279,7 @@ createModal.addEventListener('show.bs.modal', async function (event) {
                 alert("File yang dibutuhkan tidak lengkap!");
             }
             else{
+                $('#loading').show();
                 var obj = {};
                 $(event.target).serializeArray().forEach(element => {
                     try{
@@ -306,7 +324,7 @@ createModal.addEventListener('show.bs.modal', async function (event) {
             for(var i=0;i<event.target.files.length;i++){
                 list.items.add(event.target.files[i]);
                 $("#uploadedFile").append(
-                    `<li name='${event.target.files[i].name}'>${event.target.files[i].name}
+                    `<li name='${event.target.files[i].name.replace(/["']/g, "")}'>${event.target.files[i].name}
                         <button type="button" class="btn-close removeUpload" onclick="removeUpload(event,list)" aria-label="Close"></button>
                     </li>`
                 );
@@ -320,7 +338,7 @@ createModal.addEventListener('show.bs.modal', async function (event) {
             for(var i=0;i<event.target.files.length;i++){
                 attachment.items.add(event.target.files[i]);
                 $("#uploadedAttachment").append(
-                    `<li name='${event.target.files[i].name}'>${event.target.files[i].name}
+                    `<li name='${event.target.files[i].name.replace(/["']/g, "")}'>${event.target.files[i].name}
                         <button type="button" class="btn-close removeUpload" onclick="removeUpload(event,attachment)" aria-label="Close"></button>
                     </li>`
                 );
