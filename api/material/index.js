@@ -1,7 +1,7 @@
 const axios = require('axios').default;
 
 async function materialList(company,division){
-  const response = await axios.get(process.env.backend_url+`/api/materials?sort[0]=Presented:asc&filters[company][id][$eq]=${company}&filters[division][id][$eq]=${division}&populate=participants,division,Images`).catch((e)=>{
+  const response = await axios.get(process.env.backend_url+`/api/materials?sort[0]=id:asc&filters[company][id][$eq]=${company}&filters[division][id][$eq]=${division}&populate=participants,division,Images`).catch((e)=>{
     console.log(e.response.body);
   });
     return (response)?response.data.data:[];
