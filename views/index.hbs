@@ -27,7 +27,7 @@
          <div class="col material">
             <div class="card" style="width: 18rem;">
                 <figure class="hover-menu">
-                  <img class="thumbnail" src="{{../hostAddress}}{{attributes.Images.data.[0].attributes.url}}" class="card-img">
+                  <img class="thumbnail" src="/api/images?t={{attributes.Images.data.[0].attributes.mime}}&i={{attributes.Images.data.[0].attributes.url}}" class="card-img">
                   <div>
                     <a href="#" class="editMaterial"><i material="{{id}}" class="fa-solid fa-pen-to-square"></i></a>
                     <a href="#" class="removeMaterial"><i material="{{id}}" class="fa-solid fa-trash-can"></i></a>

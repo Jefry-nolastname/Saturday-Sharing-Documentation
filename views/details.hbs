@@ -14,7 +14,7 @@
                         <figure class="mb-4"><center>
                         {{!--     <img class="img-fluid rounded banner" src="https://dummyimage.com/900x400/ced4da/6c757d.jpg" alt="..." />--}}
                             {{!-- <iframe width="600" height="355" src="https://www.youtube.com/embed/o5RfId9Bkos" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe> --}}
-                            <video width="600" height="355" src="{{hostAddress}}{{Video.data.attributes.url}}" controls="">
+                            <video width="600" height="355" src="/api/images?t={{attributes.mime}}&i={{Video.data.attributes.url}}" controls="">
                             
                             </video>
                         </center></figure> 
@@ -23,7 +23,7 @@
                             <h2 class="fw-bolder mb-4 mt-5">Attachment(s) :</h2>
                             <ul>
                             {{#each Attachments.data}}
-                                <li><a target="_blank" href="{{../hostAddress}}{{attributes.url}}" download>{{attributes.name}}</a></li>
+                                <li><a target="_blank" href="/api/images?t={{attributes.mime}}&i={{attributes.url}}" download>{{attributes.name}}</a></li>
                             {{/each}}
                             </ul>
                         </section>
@@ -69,7 +69,7 @@
                             <div class="carousel-inner">
                                 {{#each Images.data}}
                                 <div class="carousel-item {{#ifEquals @index 0}} active{{/ifEquals}}">
-                                <img src="{{../hostAddress}}{{attributes.url}}" class="gallery d-block w-100" alt="...">
+                                <img src="/api/images?t={{attributes.mime}}&i={{attributes.url}}" class="gallery d-block w-100" alt="...">
                                 </div>
                                 {{/each}}
                                 {{!-- <div class="carousel-item active">
